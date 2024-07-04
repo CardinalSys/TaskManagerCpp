@@ -101,8 +101,6 @@ namespace ResourcesManager {
 
 
 
-        string gpuUsageString = std::to_string(gpuUsage * 100);
-
         // Sección de Consumo
         if (ImGui::BeginTable("Resource Consumption", 3))
         {
@@ -114,17 +112,15 @@ namespace ResourcesManager {
             ImGui::TableNextColumn();
             ImGui::Text("CPU");
             ImGui::ProgressBar(cpuUsage, ImVec2(0.0f, 0.0f)); // Consumo CPU
-            string cpuUsageString = "Usage: " + std::to_string(cpuUsage * 100);
-            ImGui::Text(cpuUsageString.c_str());
-            string cpuVelString = "Velocity: " + std::to_string(cpuVel) + " MHz";
-            ImGui::Text(cpuVelString.c_str());
+            ImGui::Text("%.2f%%", cpuUsage * 100);
+
 
             ImGui::TableNextColumn();
 
 
             ImGui::Text("GPU");
             ImGui::ProgressBar(gpuUsage, ImVec2(0.0f, 0.0f)); // Consumo GPU
-            ImGui::Text(gpuUsageString.c_str());
+            ImGui::Text("%.2f%%", gpuUsage * 100);
 
             ImGui::EndTable();
         }
@@ -140,15 +136,15 @@ namespace ResourcesManager {
             ImGui::Text(freeMemoryStr.c_str());
 
             ImGui::TableNextColumn();
-            string cpuBrand = CPU::GetInfo();
-            ImGui::Text(cpuBrand.c_str());
 
+            string cpuVelString = "Velocity: " + std::to_string(int(cpuVel)) + " MHz";
+            ImGui::Text(cpuVelString.c_str());
 
             ImGui::TableNextColumn();
 
             DXGI_ADAPTER_DESC gpuInfo = GPU::GetGPUInfo();
 
-            string vram = "Video GPU memory: " + std::to_string(gpuInfo.DedicatedVideoMemory / 1024 / 1024) + " MB";
+            string vram = "VRAM: " + std::to_string(gpuInfo.DedicatedVideoMemory / 1024 / 1024) + " MB";
             ImGui::Text(vram.c_str());
 
             ImGui::EndTable();

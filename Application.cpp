@@ -26,20 +26,25 @@ namespace ResourcesManager {
     bool show_another_window;
     float clear_color;
 
-    std::chrono::time_point<std::chrono::steady_clock> lastUpdateSlowTime;
+    std::chrono::time_point<std::chrono::steady_clock> lastUpdateTime;
 
     double cpuUsage = 0;
     double memoryUsage = 0;
     double gpuUsage = 0;
     double cpuVel = 0;
 
-    long long firstTick = 0;
+
+
+    static int time = 1000;
 
     DWORDLONG totalMemory;
     DWORDLONG freeMemory;
 
     string totalMemorystring;
     string freeMemorystring;
+
+    RAM ram;
+    CPU cpu;
 
     void RenderUI() {
         ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
@@ -60,43 +65,27 @@ namespace ResourcesManager {
         
         ImGui::Begin("General");
 
-        // Encabezado
         ImGui::Text("Resource Manager");
 
 
-
-
         auto now = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsedSeconds = now - lastUpdateSlowTime;
-        //SlowTimer
-        if (elapsedSeconds.count() >= 1) {
+        std::chrono::duration<double> elapsedSeconds = now - lastUpdateTime;
+
+
+        if (elapsedSeconds.count() >= time / static_cast<double>(1000)) {
             auto end = std::chrono::steady_clock::now();
-            cpuUsage = CPU::GetCPULoad();
+            std::chrono::duration<double> elapsedTime = end - now;
 
+            ram.UpdateValues();
+            cpu.UpdateValues(elapsedTime);
 
+            cpuUsage = cpu.load;
+            cpuVel = cpu.frecuencyInMHz;
             gpuUsage = GPU::GetGPUUsage();
 
-            totalMemory = RAM::GetTotalMemory();
-            freeMemory = RAM::GetFreeMemory();
+            memoryUsage = static_cast<double>(ram.totalRamInMb - ram.freeRamInMb) / ram.totalRamInMb;
 
-            totalMemorystring = ConvertToMB(totalMemory);
-            freeMemorystring = ConvertToMB(freeMemory);
-
-            memoryUsage = static_cast<double>(totalMemory - freeMemory) / totalMemory;
-
-            if (firstTick == 0) {
-                firstTick = CPU::GetTicks();
-            }
-            else {
-
-                std::chrono::duration<double> elapsedTime = end - now;
-                cpuVel = ((CPU::GetTicks() - firstTick) / elapsedTime.count()) / 1e12;
-
-                firstTick = 0;
-
-            }
-
-            lastUpdateSlowTime = now;
+            lastUpdateTime = now;
         }
 
 
@@ -130,10 +119,12 @@ namespace ResourcesManager {
         if (ImGui::BeginTable("Total Values", 3))
         {
             ImGui::TableNextColumn();
-            string totalMemoryStr = "Total RAM: " + totalMemorystring;
+            string totalMemoryStr = "Total RAM: " +  std::to_string(ram.totalRamInMb) + " MB";
             ImGui::Text(totalMemoryStr.c_str());
-            string freeMemoryStr = "Free RAM: " + freeMemorystring;
+            string freeMemoryStr = "Free RAM: " + std::to_string(ram.freeRamInMb) + " MB";
             ImGui::Text(freeMemoryStr.c_str());
+            string usedMemoryStr = "Used RAM: " + std::to_string(ram.usedRamInMb) + " MB";
+            ImGui::Text(usedMemoryStr.c_str());
 
             ImGui::TableNextColumn();
 
@@ -150,26 +141,16 @@ namespace ResourcesManager {
             ImGui::EndTable();
         }
 
+        ImGui::InputInt("Update time in ms", &time);
+
+
         ImGui::End();
 
     }
 
 
 
-    void DisplayDataInConsole() {
-        DWORDLONG totalMemory = RAM::GetTotalMemory();
 
-        while (true) {
-            DWORDLONG freeMemory = RAM::GetFreeMemory();
-
-            cout << "Total memory: " << totalMemory << " KB" << endl;
-            cout << "Free memory: " << freeMemory << " KB" << endl;
-            cout << "Available memory: " << totalMemory - freeMemory << " KB" << endl;
-
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            system("CLS");
-        }
-    }
 
     void ShowAllProcessMemory() {
         DWORD aProcesses[1024], cbNeeded, cProcesses;
@@ -188,7 +169,7 @@ namespace ResourcesManager {
 
         for (i = 0; i < cProcesses; i++)
         {
-            RAM::PrintMemoryInfo(aProcesses[i]);
+            //RAM::PrintMemoryInfo(aProcesses[i]);
         }
 
     }

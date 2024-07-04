@@ -5,7 +5,20 @@
 
 #define WIDTH 7
 
+DWORDLONG TotalPhysicalMemory;
+DWORDLONG FreePhysicalMemory;
+DWORDLONG UsedPhysicalMemory;
 
+static DWORDLONG GetTotalMemory();
+static DWORDLONG GetFreeMemory();
+static void PrintMemoryInfo(DWORD processID);
+
+
+void RAM::UpdateValues() {
+    totalRamInMb = GetTotalMemory();
+    freeRamInMb = GetFreeMemory();
+    usedRamInMb = totalRamInMb - freeRamInMb;
+}
 
 static MEMORYSTATUSEX GetMemoryInfo() {
     MEMORYSTATUSEX statex{};
@@ -15,21 +28,21 @@ static MEMORYSTATUSEX GetMemoryInfo() {
     return statex;
 }
 
-DWORDLONG RAM::GetTotalMemory()
+DWORDLONG GetTotalMemory()
 {
     MEMORYSTATUSEX statex = GetMemoryInfo();
 
-    return statex.ullTotalPhys / DIV;
+    return statex.ullTotalPhys / DIV / DIV;
 }
 
-DWORDLONG RAM::GetFreeMemory() {
+DWORDLONG GetFreeMemory() {
 
     MEMORYSTATUSEX statex = GetMemoryInfo();
 
-    return statex.ullAvailPhys / DIV;
+    return statex.ullAvailPhys / DIV / DIV;
 }
 
-void RAM::PrintMemoryInfo(DWORD processID)
+void PrintMemoryInfo(DWORD processID)
 {
     HANDLE hProcess;
     PROCESS_MEMORY_COUNTERS pmc;
